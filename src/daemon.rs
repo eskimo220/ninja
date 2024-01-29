@@ -22,7 +22,12 @@ pub(super) fn serve(mut args: ServeArgs, relative_path: bool) -> anyhow::Result<
     }
 
     let arkose_solver = match args.arkose_solver_key.as_ref() {
-        Some(key) => Some(ArkoseSolver::new(args.arkose_solver.clone(), key.clone())),
+        Some(client_key) => Some(ArkoseSolver::new(
+            args.arkose_solver,
+            client_key.clone(),
+            args.arkose_solver_url,
+            args.arkose_solver_limit,
+        )),
         None => None,
     };
 
@@ -84,8 +89,7 @@ pub(super) fn serve(mut args: ServeArgs, relative_path: bool) -> anyhow::Result<
     #[cfg(feature = "limit")]
     let builder = builder
         .tb_enable(args.tb_enable)
-        .tb_store_strategy(args.tb_store_strategy)
-        .tb_redis_url(args.tb_redis_url)
+        .tb_strategy(args.tb_strategy)
         .tb_capacity(args.tb_capacity)
         .tb_fill_rate(args.tb_fill_rate)
         .tb_expired(args.tb_expired);
@@ -150,10 +154,12 @@ pub(super) fn serve_start(mut args: ServeArgs) -> anyhow::Result<()> {
         .stderr(stderr) // Redirect stderr to `/tmp/daemon.err`.
         .privileged_action(|| "Executed before drop privileges");
 
-    if let Ok(Some(real_user)) = nix::unistd::User::from_name("root") {
-        daemonize = daemonize
-            .user(real_user.name.as_str())
-            .group(real_user.gid.as_raw());
+    if let Ok(user) = std::env::var("SUDO_USER") {
+        if let Ok(Some(real_user)) = nix::unistd::User::from_name(&user) {
+            daemonize = daemonize
+                .user(real_user.name.as_str())
+                .group(real_user.gid.as_raw());
+        }
     }
 
     fix_relative_path(&mut args);
@@ -275,8 +281,7 @@ pub(super) fn generate_template(out: Option<PathBuf>) -> anyhow::Result<()> {
         timeout: 600,
         connect_timeout: 60,
         tcp_keepalive: 60,
-        tb_store_strategy: "mem".to_string(),
-        tb_redis_url: "redis://127.0.0.1:6379".to_string(),
+        tb_strategy: "mem".to_string(),
         tb_enable: false,
         tb_capacity: 60,
         tb_fill_rate: 1,

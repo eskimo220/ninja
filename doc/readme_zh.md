@@ -126,11 +126,11 @@ services:
 
 `ChatGPT` 官网发送一次 `GPT-4` 会话消息，浏览器 `F12` 下载 `https://tcr9i.chat.openai.com/fc/gt2/public_key/35536E1E-65B4-4D96-9D97-6ADB7EFF8147` 接口的HAR日志记录文件，使用启动参数 `--arkose-gpt4-har-dir` 指定HAR目录路径使用（不指定路径则使用默认路径`~/.ninja/gpt4`，可直接上传更新HAR），同理`GPT-3.5`和其他类型也是一样方法。支持WebUI上传更新HAR，请求路径:`/har/upload`，可选上传身份验证参数:`--arkose-har-upload-key`
 
-2) 使用[YesCaptcha](https://yescaptcha.com/i/1Cc5i4) / [CapSolver](https://dashboard.capsolver.com/passport/register?inviteCode=y7CtB_a-3X6d)
+2) 使用 [Fcsrv](https://github.com/gngpp/fcsrv) / [YesCaptcha](https://yescaptcha.com/i/1Cc5i4) / [CapSolver](https://dashboard.capsolver.com/passport/register?inviteCode=y7CtB_a-3X6d)
 
-平台进行验证码解析，启动参数`--arkose-solver`选择平台（默认使用`YesCaptcha`），`--arkose-solver-key` 填写`Client Key`
+- `Fcsrv` / `YesCaptcha` / `CapSolver`推荐搭配HAR使用，出验证码则调用解析器处理
 
-- `YesCaptcha` / `CapSolver`推荐搭配HAR使用，出验证码则调用解析器处理
+平台进行验证码解析，启动参数`--arkose-solver`选择平台（默认使用`Fcsrv`），`--arkose-solver-key` 填写`Client Key`，选择自定义的提交节点URL，例如：`http://localhost:8000/task`，`Fcsrv`/`YesCaptcha`/`CapSolver`都支持，`Fcsrv`/`YesCaptcha`/`CapSolver`都支持，`Fcsrv`/`YesCaptcha`/`CapSolver`都支持，重要的事情说三遍。
 
 目前OpenAI已经更新`登录`需要验证`Arkose Token`，解决方式同`GPT-4`，填写启动参数指定HAR文件`--arkose-auth-har-dir`。创建API-Key需要上传Platform相关的HAR特征文件，获取方式同上。
 
@@ -317,7 +317,7 @@ Options:
       --enable-direct
           Enable direct connection [env: ENABLE_DIRECT=]
   -I, --impersonate-uas <IMPERSONATE_UAS>
-          Impersonate User-Agent, separate multiple ones with ","
+          Impersonate User-Agent, separate multiple ones with "," [env: IMPERSONATE_UA=]
       --cookie-store
           Enabled Cookie Store [env: COOKIE_STORE=]
       --fastest-dns
@@ -357,15 +357,17 @@ Options:
   -K, --arkose-har-upload-key <ARKOSE_HAR_UPLOAD_KEY>
           HAR file upload authenticate key
   -s, --arkose-solver <ARKOSE_SOLVER>
-          About ArkoseLabs solver platform [default: yescaptcha]
+          About ArkoseLabs solver platform [default: fcsrv]
   -k, --arkose-solver-key <ARKOSE_SOLVER_KEY>
           About the solver client key by ArkoseLabs
+      --arkose-solver-url <ARKOSE_SOLVER_URL>
+          About the solver client url by ArkoseLabs
+      --arkose-solver-limit <ARKOSE_SOLVER_LIMIT>
+          About the solver submit multiple image limit by ArkoseLabs [default: 1]
   -T, --tb-enable
           Enable token bucket flow limitation
-      --tb-store-strategy <TB_STORE_STRATEGY>
-          Token bucket store strategy (mem/redis) [default: mem]
-      --tb-redis-url <TB_REDIS_URL>
-          Token bucket redis connection url [default: redis://127.0.0.1:6379]
+      --tb-strategy <TB_STRATEGY>
+          Token bucket store strategy (mem/redb) [default: mem]
       --tb-capacity <TB_CAPACITY>
           Token bucket capacity [default: 60]
       --tb-fill-rate <TB_FILL_RATE>
